@@ -1,11 +1,13 @@
 def get_busco_lineage(sample):
-    for species, samples in config["species_groups"].items():
-        if sample in samples:
-            return config["busco_lineages"][species]
+    group = SAMPLES[sample]["group"]
 
-    raise ValueError(
-        f"No se encontró grupo de especie para la muestra {sample}"
-    )
+    if group not in config["busco_lineages"]:
+        raise ValueError(
+            f"No se encontró linaje BUSCO para el grupo {group} "
+            f"(muestra {sample})"
+        )
+
+    return config["busco_lineages"][group]
 
 
 rule busco:

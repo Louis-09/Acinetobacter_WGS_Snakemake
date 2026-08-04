@@ -6,10 +6,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
-
 RESULTS = Path("results")
 
 SAMPLES = list(snakemake.params.samples)
+SPECIES_GROUPS = dict(snakemake.params.species_groups)
 
 SPECIES_NAMES = {
     "abaumannii": "Acinetobacter baumannii",
@@ -120,7 +120,7 @@ def parse_amrfinder(sample):
 
 
 def parse_mobsuite(sample):
-    path = RESULTS / "MOBsuite" / sample / "mobtyper_results.txt"
+    path = RESULTS / sample / "mobsuite" / "mobtyper_results.txt"
 
     if not path.exists():
         return []
@@ -390,7 +390,7 @@ ws_mob.append(mob_headers)
 
 for sample in SAMPLES:
 
-    path = RESULTS / "MOBsuite" / sample / "mobtyper_results.txt"
+    path = RESULTS / sample / "mobsuite" / "mobtyper_results.txt"
 
     if not path.exists():
         continue
@@ -478,7 +478,6 @@ ws_ani.freeze_panes = "A2"
 ws_ani.auto_filter.ref = ws_ani.dimensions
 
 auto_width(ws_ani)
-
 # ============================================================
 # IQ-TREE / PHYLOGENY
 # ============================================================
@@ -486,119 +485,106 @@ auto_width(ws_ani)
 ws_tree = wb.create_sheet("Phylogeny")
 
 ws_tree.append([
+    "Species",
     "Parameter",
     "Value",
 ])
 
-treefile = RESULTS / "IQTree" / "final" / "core_genome.treefile"
-iqtree_report = RESULTS / "IQTree" / "final" / "core_genome.iqtree"
+iqtree_dir = RESULTS / "iqtree"
 
-# Newick tree
-if treefile.exists():
-    newick = treefile.read_text().strip()
+if iqtree_dir.exists():
 
-    ws_tree.append([
-        "Maximum-likelihood tree (Newick)",
-        newick
-    ])
+    for species_dir in sorted(iqtree_dir.iterdir()):
 
-# IQ-TREE report
-if iqtree_report.exists():
+        if not species_dir.is_dir():
+            continue
 
-    text = iqtree_report.read_text()
+        species = species_dir.name
 
-    model = re.search(
-        r"Best-fit model according to BIC:\s+(\S+)",
-        text
-    )
+        treefile = species_dir / "core_genome.treefile"
+        iqtree_report = species_dir / "core_genome.iqtree"
 
-    if not model:
-        model = re.search(
-            r"Best-fit model:\s+(\S+)",
-            text
-        )
+        # Newick tree
+        if treefile.exists():
 
-    if model:
-        ws_tree.append([
-            "Best-fit substitution model",
-            model.group(1)
-        ])
+            newick = treefile.read_text().strip()
 
-    likelihood = re.search(
-        r"Log-likelihood of the tree:\s+([-\d.]+)",
-        text
-    )
+            ws_tree.append([
+                species,
+                "Maximum-likelihood tree (Newick)",
+                newick
+            ])
 
-    if likelihood:
-        ws_tree.append([
-            "Log-likelihood",
-            float(likelihood.group(1))
-        ])
+        # IQ-TREE report
+        if iqtree_report.exists():
 
-    tree_length = re.search(
-        r"Sum of branch lengths:\s+([\d.eE+-]+)",
-        text
-    )
+            text = iqtree_report.read_text()
 
-    if tree_length:
-        ws_tree.append([
-            "Total tree length",
-            float(tree_length.group(1))
-        ])
+            model = re.search(
+                r"Best-fit model according to BIC:\s+(\S+)",
+                text
+            )
 
+            if not model:
+                model = re.search(
+                    r"Best-fit model:\s+(\S+)",
+                    text
+                )
 
-ws_tree.append([
-    "Bootstrap",
-    "Not performed (fewer than 4 sequences)"
-])
+            if model:
+                ws_tree.append([
+                    species,
+                    "Best-fit substitution model",
+                    model.group(1)
+                ])
+
+            likelihood = re.search(
+                r"Log-likelihood of the tree:\s+([-\d.]+)",
+                text
+            )
+
+            if likelihood:
+                ws_tree.append([
+                    species,
+                    "Log-likelihood",
+                    float(likelihood.group(1))
+                ])
+
+            tree_length = re.search(
+                r"Sum of branch lengths:\s+([\d.eE+-]+)",
+                text
+            )
+
+            if tree_length:
+                ws_tree.append([
+                    species,
+                    "Total tree length",
+                    float(tree_length.group(1))
+                ])
+
+        # Bootstrap only makes sense when enough sequences are present
+        samples_in_species = SPECIES_GROUPS.get(species, [])
+
+        if len(samples_in_species) < 4:
+            ws_tree.append([
+                species,
+                "Bootstrap",
+                "Not performed (fewer than 4 sequences)"
+            ])
 
 
 for cell in ws_tree[1]:
     cell.font = Font(bold=True)
 
 ws_tree.freeze_panes = "A2"
+ws_tree.auto_filter.ref = ws_tree.dimensions
 
-ws_tree.column_dimensions["A"].width = 35
-ws_tree.column_dimensions["B"].width = 100
-ws_tree["B2"].alignment = Alignment(wrap_text=True)
+ws_tree.column_dimensions["A"].width = 22
+ws_tree.column_dimensions["B"].width = 35
+ws_tree.column_dimensions["C"].width = 100
 
-output_dir = RESULTS / "final_report"
-output_dir.mkdir(parents=True, exist_ok=True)
-
-output = output_dir / "genomic_report.xlsx"
-
-# ============================================================
-# FINAL FORMATTING
-# ============================================================
-
-for sheet in wb.worksheets:
-    sheet.freeze_panes = "A2"
-
-    if sheet.max_row > 1 and sheet.max_column > 1:
-        sheet.auto_filter.ref = sheet.dimensions
-
-    auto_width(sheet)
-
-# Summary-specific formatting
-ws.column_dimensions["O"].width = 35
-ws.column_dimensions["P"].width = 18
-
-for row in ws.iter_rows(min_row=2):
-    row[14].alignment = Alignment(
+for row in ws_tree.iter_rows(min_row=2):
+    row[2].alignment = Alignment(
         vertical="top",
         wrap_text=True
     )
-
-# Phylogeny-specific formatting
-ws_tree.column_dimensions["A"].width = 35
-ws_tree.column_dimensions["B"].width = 70
-
-for cell in ws_tree["B"]:
-    cell.alignment = Alignment(
-        vertical="top",
-        wrap_text=True
-    )
-
-wb.save(output)
-
-print(f"Report written to: {output}")

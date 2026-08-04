@@ -28,9 +28,8 @@ busco:
   threads: 8
 
 busco_lineages:
-  abaumannii: pseudomonadales_odb10
-  paeruginosa: pseudomonadales_odb10
-  kpneumoniae: pseudomonadales_odb10
+  Acinetobacter: pseudomonadales_odb10
+  Klebsiella: enterobacterales_odb10
 
 ########################################
 # Bakta
@@ -63,9 +62,11 @@ amrfinder:
   database: "/Users/louis/databases/amrfinder/latest"
 
 amrfinder_organisms:
-  abaumannii: Acinetobacter_baumannii
-  paeruginosa: Pseudomonas_aeruginosa
-  kpneumoniae: Klebsiella_pneumoniae
+  Acinetobacter: Acinetobacter_baumannii
+  Klebsiella: Klebsiella_pneumoniae
+
+amrfinder_sample_overrides:
+  AB69: Pseudomonas_aeruginosa
 ########################################
 # VFDB
 ########################################

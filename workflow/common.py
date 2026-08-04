@@ -47,6 +47,7 @@ def discover_samples(reads_dir="reads"):
 
         # La carpeta que contiene los FASTQ define la muestra
         sample = r1.parent.name
+        group = r1.parent.parent.name
 
         # Evitar sobrescribir accidentalmente una muestra
         if sample in samples:
@@ -58,7 +59,8 @@ def discover_samples(reads_dir="reads"):
 
         samples[sample] = {
             "R1": str(r1.resolve()),
-            "R2": str(r2.resolve())
+            "R2": str(r2.resolve()),
+            "group": group
         }
 
     if not samples:

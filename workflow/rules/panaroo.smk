@@ -10,10 +10,10 @@ def get_panaroo_gffs(wildcards):
 rule panaroo:
     input:
         gffs=get_panaroo_gffs
-
     output:
         presence_absence="results/panaroo/{species}/gene_presence_absence.csv",
-        core_alignment="results/panaroo/{species}/core_gene_alignment.aln"
+        core_alignment="results/panaroo/{species}/core_gene_alignment.aln",
+        core_alignment_filtered="results/panaroo/{species}/core_gene_alignment_filtered.aln"
 
     log:
         "logs/panaroo/{species}.log"

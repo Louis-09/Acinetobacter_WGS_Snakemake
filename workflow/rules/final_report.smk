@@ -21,15 +21,25 @@ rule final_report:
             sample=SAMPLE_NAMES
         ),
         mobsuite=expand(
-            "results/MOBsuite/{sample}/mobtyper_results.txt",
+            "results/{sample}/mobsuite/mobtyper_results.txt",
             sample=SAMPLE_NAMES
         ),
         fastani=expand(
             "results/fastani/{species}/fastani.tsv",
             species=FASTANI_SPECIES
         ),
-        tree="results/IQTree/final/core_genome.treefile",
-        iqtree="results/IQTree/final/core_genome.iqtree"
+        panaroo=expand(
+            "results/panaroo/{species}/gene_presence_absence.csv",
+            species=FASTANI_SPECIES
+        ),
+        tree=expand(
+            "results/iqtree/{species}/core_genome.treefile",
+            species=FASTANI_SPECIES
+        ),
+        iqtree=expand(
+            "results/iqtree/{species}/core_genome.iqtree",
+            species=FASTANI_SPECIES
+        )
 
     output:
         report="results/final_report/genomic_report.xlsx"

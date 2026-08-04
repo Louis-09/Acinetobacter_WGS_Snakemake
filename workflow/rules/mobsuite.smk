@@ -15,12 +15,12 @@ rule mobsuite:
         "logs/mobsuite/{sample}.log"
 
     shell:
-        r"""
-        mkdir -p results/{wildcards.sample}/mobsuite
-        mkdir -p logs/mobsuite
+       r"""
+       rm -rf results/{wildcards.sample}/mobsuite
+       mkdir -p logs/mobsuite
 
-        mob_recon \
-            --infile {input.assembly:q} \
-            --outdir results/{wildcards.sample}/mobsuite \
-            > {log:q} 2>&1
-        """
+       mob_recon \
+          --infile {input.assembly:q} \
+          --outdir results/{wildcards.sample}/mobsuite \
+          > {log:q} 2>&1
+      """

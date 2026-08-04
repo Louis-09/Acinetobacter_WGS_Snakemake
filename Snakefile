@@ -122,21 +122,37 @@ rule all:
             "results/{sample}/vfdb/{sample}_vfdb.tsv",
             sample=SAMPLE_NAMES
         ),
-#        #expand(
-#        #    "results/{sample}/mobsuite/mobtyper_results.txt",
-#       #   sample=SAMPLE_NAMES
-#        #),
 
+        expand(
+            "results/{sample}/mobsuite/mobtyper_results.txt",
+            sample=SAMPLE_NAMES
+        ),
 
-#        expand(
-#            "results/{sample}/mobsuite/mobtyper_results.txt",
-#            sample=SAMPLES
-#        ),
+        expand(
+            "results/{sample}/prokka/{sample}.gff",
+            sample=SAMPLE_NAMES
+        ),
+
         expand(
             "results/fastani/{species}/fastani.tsv",
             species=FASTANI_SPECIES
         ),
-        "results/IQTree/final/core_genome.treefile",
+
+        expand(
+            "results/panaroo/{species}/gene_presence_absence.csv",
+            species=FASTANI_SPECIES
+        ),
+
+        expand(
+            "results/panaroo/{species}/core_gene_alignment_filtered.aln",
+            species=FASTANI_SPECIES
+        ),
+
+        expand(
+            "results/iqtree/{species}/core_genome.treefile",
+            species=FASTANI_SPECIES
+        ),
+
         "results/final_report/genomic_report.xlsx",
         
     

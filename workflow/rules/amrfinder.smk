@@ -1,20 +1,24 @@
 def get_amrfinder_organism(wildcards):
     sample = wildcards.sample
 
-    for species, samples in config["species_groups"].items():
-        if sample in samples:
-            organism = config["amrfinder_organisms"].get(species)
+    # Excepción específica por muestra, si existe
+    overrides = config.get("amrfinder_sample_overrides", {})
 
-            if organism is None:
-                raise ValueError(
-                    f"No AMRFinder organism configured for species '{species}'"
-                )
+    if sample in overrides:
+        return overrides[sample]
 
-            return organism
+    # En caso contrario, usar el grupo de la carpeta de reads
+    group = SAMPLES[sample]["group"]
 
-    raise ValueError(
-        f"Sample '{sample}' was not found in species_groups"
-    )
+    organism = config["amrfinder_organisms"].get(group)
+
+    if organism is None:
+        raise ValueError(
+            f"No AMRFinder organism configured for group '{group}' "
+            f"(sample '{sample}')"
+        )
+
+    return organism
 
 
 rule amrfinder:
