@@ -2,7 +2,7 @@ def get_panaroo_gffs(wildcards):
     samples = config["species_groups"][wildcards.species]
 
     return [
-        f"results/{sample}/bakta/{sample}.gff3"
+        f"results/{sample}/prokka/{sample}.gff"
         for sample in samples
     ]
 
@@ -10,26 +10,31 @@ def get_panaroo_gffs(wildcards):
 rule panaroo:
     input:
         gffs=get_panaroo_gffs
+
     output:
         presence_absence="results/panaroo/{species}/gene_presence_absence.csv",
         core_alignment="results/panaroo/{species}/core_gene_alignment.aln"
+
     log:
         "logs/panaroo/{species}.log"
+
     conda:
         "../../envs/panaroo.yaml"
+
     threads:
         config["panaroo"]["threads"]
+
     shell:
         r"""
         mkdir -p results/panaroo/{wildcards.species}
         mkdir -p logs/panaroo
 
         panaroo \
-            -i {input.gffs} \
+            -i {input.gffs:q} \
             -o results/panaroo/{wildcards.species} \
             --clean-mode strict \
             -a core \
             --aligner mafft \
             -t {threads} \
-            > {log} 2>&1
+            > {log:q} 2>&1
         """

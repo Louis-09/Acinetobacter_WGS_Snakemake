@@ -8,7 +8,8 @@ rule mobsuite:
     conda:
         "../../envs/mobsuite.yaml"
 
-    threads: 8
+    threads:
+        config["mobsuite"]["threads"]
 
     log:
         "logs/mobsuite/{sample}.log"
@@ -19,7 +20,7 @@ rule mobsuite:
         mkdir -p logs/mobsuite
 
         mob_recon \
-            --infile {input.assembly} \
+            --infile {input.assembly:q} \
             --outdir results/{wildcards.sample}/mobsuite \
-            > {log} 2>&1
+            > {log:q} 2>&1
         """
