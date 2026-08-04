@@ -15,13 +15,13 @@ rule fastp:
     shell:
         r"""
         mkdir -p results/{wildcards.sample}/trimmed
-
-        fastp \
-            -i {input.r1} \
-            -I {input.r2} \
-            -o {output.r1} \
-            -O {output.r2} \
-            --html {output.html} \
-            --json {output.json} \
-            --thread {threads}
+	
+	fastp \
+   	    -i {input.r1:q} \
+   	    -I {input.r2:q} \
+    	    -o {output.r1:q} \
+   	    -O {output.r2:q} \
+    	    --html {output.html:q} \
+    	    --json {output.json:q} \
+    	    --thread {threads}
         """

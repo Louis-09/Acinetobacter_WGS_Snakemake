@@ -5,13 +5,14 @@ from pathlib import Path
 def get_genome_size(wildcards):
     sample = wildcards.sample
 
-    for species, samples in config["species_groups"].items():
+    # Si la especie ya es conocida, usar su tamaño específico
+    for species, samples in config.get("species_groups", {}).items():
         if sample in samples:
             return config["genome_sizes"][species]
 
-    raise ValueError(
-        f"Sample '{sample}' was not found in species_groups"
-    )
+    # Si la especie todavía es desconocida, usar tamaño genómico
+    # aproximado únicamente para el subsampling previo al ensamblaje
+    return config["default_genome_size"]
 
 rule subsample:
     input:

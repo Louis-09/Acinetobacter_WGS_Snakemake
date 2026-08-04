@@ -16,6 +16,8 @@ genome_sizes:
   paeruginosa: 6700000
   kpneumoniae: 5500000
 
+default_genome_size: 7000000
+
 target_coverage: 120
 
 ########################################
