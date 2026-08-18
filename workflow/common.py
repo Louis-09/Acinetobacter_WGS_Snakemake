@@ -1,4 +1,5 @@
 from pathlib import Path
+import csv
 
 
 def discover_samples(reads_dir="reads"):
@@ -37,19 +38,16 @@ def discover_samples(reads_dir="reads"):
 
         if not r2.exists():
             print(
-                f"Advertencia: no se encontró R2 para "
-                f"{r1}"
+                f"Advertencia: no se encontró R2 para {r1}"
             )
             continue
 
         if r2.name.startswith("._"):
             continue
 
-        # La carpeta que contiene los FASTQ define la muestra
         sample = r1.parent.name
         group = r1.parent.parent.name
 
-        # Evitar sobrescribir accidentalmente una muestra
         if sample in samples:
             raise ValueError(
                 f"Identificador de muestra duplicado: '{sample}'\n"
@@ -60,7 +58,7 @@ def discover_samples(reads_dir="reads"):
         samples[sample] = {
             "R1": str(r1.resolve()),
             "R2": str(r2.resolve()),
-            "group": group
+            "group": group,
         }
 
     if not samples:
@@ -69,3 +67,52 @@ def discover_samples(reads_dir="reads"):
         )
 
     return samples
+
+
+def discover_species_groups(results_dir="results"):
+    """
+    Agrupa automáticamente las muestras por especie
+    usando los resultados de species_identification.
+    """
+
+    results_dir = Path(results_dir)
+
+    groups = {}
+
+    for tsv in results_dir.glob("*/species_identification/best_hit.tsv"):
+
+        sample = tsv.parts[-3]
+
+        with tsv.open() as f:
+            reader = csv.DictReader(f, delimiter="\t")
+            row = next(reader, None)
+
+        # Archivo vacío
+        if row is None:
+            continue
+
+        # Solo identificaciones exitosas
+        if row.get("status") != "PASS":
+            continue
+
+        species = row.get("predicted_species", "").strip()
+
+        if species in ("", "NA", "Unresolved"):
+            continue
+
+        key = (
+            species.lower()
+            .replace(" ", "_")
+            .replace(".", "")
+        )
+
+        groups.setdefault(key, []).append(sample)
+
+    # Mantener únicamente especies con al menos 2 genomas
+    groups = {
+        species: samples
+        for species, samples in groups.items()
+        if len(samples) >= 2
+    }
+
+    return groups

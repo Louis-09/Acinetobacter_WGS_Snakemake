@@ -1,9 +1,14 @@
-from workflow.common import discover_samples
+from workflow.common import (
+    discover_samples,
+    discover_species_groups,
+)
 
 configfile: "config/config.yaml"
 
 SAMPLES = discover_samples()
 SAMPLE_NAMES = sorted(SAMPLES.keys())
+
+AUTO_SPECIES_GROUPS = discover_species_groups()
 
 include: "workflow/rules/fastqc.smk"
 include: "workflow/rules/fastp.smk"
@@ -20,13 +25,10 @@ include: "workflow/rules/amrfinder.smk"
 include: "workflow/rules/vfdb.smk"
 include: "workflow/rules/mobsuite.smk"
 include: "workflow/rules/fastani.smk"
+include: "workflow/rules/species_identification.smk"
 include: "workflow/rules/iqtree.smk"
 
-FASTANI_SPECIES = [
-    species
-    for species, samples in config["species_groups"].items()
-    if len(samples) >= 2
-]
+FASTANI_SPECIES = sorted(AUTO_SPECIES_GROUPS.keys())
 
 include: "workflow/rules/final_report.smk"
 
@@ -119,12 +121,18 @@ rule all:
             sample=SAMPLE_NAMES
         ), 
         expand(
-            "results/{sample}/vfdb/{sample}_vfdb.tsv",
+            "results/{sample}/vfdb/{sample}_vfdb_filtered.tsv",
             sample=SAMPLE_NAMES
         ),
 
         expand(
             "results/{sample}/mobsuite/mobtyper_results.txt",
+            sample=SAMPLE_NAMES
+        ),
+
+ 	# Identificación automática de especie mediante FastANI
+        expand(
+            "results/{sample}/species_identification/best_hit.tsv",
             sample=SAMPLE_NAMES
         ),
 

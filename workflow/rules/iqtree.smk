@@ -24,6 +24,8 @@ rule iqtree:
         iqtree3 \
             -s {input.alignment:q} \
             -m MFP \
+            -B 1000 \
+            -alrt 1000 \
             -T {threads} \
             -pre results/iqtree/{wildcards.species}/core_genome \
             > {log:q} 2>&1

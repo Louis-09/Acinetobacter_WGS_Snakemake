@@ -3,6 +3,7 @@
 ########################################
 
 threads: 8
+memory_mb: 7000
 
 reads: "reads"
 results: "results"
@@ -36,7 +37,7 @@ busco_lineages:
 ########################################
 
 bakta:
-  db: /Users/louis/databases/bakta/db-light
+  db: /home/louis/databases/bakta/db-light
   threads: 8
 
 ########################################
@@ -59,7 +60,7 @@ mlst:
 
 amrfinder:
   threads: 8
-  database: "/Users/louis/databases/amrfinder/latest"
+  database: "/home/louis/databases/amrfinder/latest"
 
 amrfinder_organisms:
   Acinetobacter: Acinetobacter_baumannii
@@ -71,8 +72,10 @@ amrfinder_sample_overrides:
 # VFDB
 ########################################
 vfdb:
-  db: /Users/louis/Downloads/Acinetobacter_WGS_Snakemake/databases/vfdb/VFDB_prot
+  db: /home/louis/databases/vfdb/VFDB_prot
   threads: 8
+  min_identity: 80
+  min_coverage: 80
 ########################################
 # MOB-suite
 ########################################

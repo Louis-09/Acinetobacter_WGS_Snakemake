@@ -1,6 +1,9 @@
+name: subsample
+
 channels:
   - conda-forge
   - bioconda
 
 dependencies:
-  - blast
+  - seqkit
+  - seqtk

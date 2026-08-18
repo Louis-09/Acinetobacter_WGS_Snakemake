@@ -1,5 +1,5 @@
 def get_panaroo_gffs(wildcards):
-    samples = config["species_groups"][wildcards.species]
+    samples = AUTO_SPECIES_GROUPS[wildcards.species]
 
     return [
         f"results/{sample}/prokka/{sample}.gff"

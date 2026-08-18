@@ -9,13 +9,16 @@ rule fastqc:
     threads:
         config["threads"]
 
+    conda:
+        "../../envs/fastqc.yaml"
+
     shell:
         r"""
-        mkdir -p {output}
+        mkdir -p {output:q}
 
         fastqc \
             -t {threads} \
-            {input.r1} \
-            {input.r2} \
-            -o {output}
+            {input.r1:q} \
+            {input.r2:q} \
+            -o {output:q}
         """

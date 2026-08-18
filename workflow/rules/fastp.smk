@@ -9,19 +9,22 @@ rule fastp:
         html="results/{sample}/trimmed/{sample}_fastp.html",
         json="results/{sample}/trimmed/{sample}_fastp.json"
 
+    conda:
+        "../../envs/fastp.yaml"
+
     threads:
         config["threads"]
 
     shell:
         r"""
         mkdir -p results/{wildcards.sample}/trimmed
-	
-	fastp \
-   	    -i {input.r1:q} \
-   	    -I {input.r2:q} \
-    	    -o {output.r1:q} \
-   	    -O {output.r2:q} \
-    	    --html {output.html:q} \
-    	    --json {output.json:q} \
-    	    --thread {threads}
+
+        fastp \
+            -i {input.r1:q} \
+            -I {input.r2:q} \
+            -o {output.r1:q} \
+            -O {output.r2:q} \
+            --html {output.html:q} \
+            --json {output.json:q} \
+            --thread {threads}
         """

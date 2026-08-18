@@ -10,6 +10,9 @@ rule multiqc:
 
     threads: 1
 
+    conda:
+        "../../envs/multiqc.yaml"
+
     shell:
         r"""
         mkdir -p results/multiqc

@@ -11,8 +11,14 @@ rule spades:
     threads:
         config["threads"]
 
+    resources:
+        mem_mb=config["memory_mb"]
+
     log:
         "logs/spades/{sample}.log"
+
+    conda:
+        "../../envs/spades.yaml"
 
     shell:
         r"""
@@ -24,5 +30,6 @@ rule spades:
             -2 {input.r2} \
             -o {output.assembly} \
             --threads {threads} \
+            --memory 7 \
             > {log} 2>&1
         """

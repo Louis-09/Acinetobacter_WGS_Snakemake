@@ -1,4 +1,4 @@
-SPECIES_GROUPS = config["species_groups"]
+SPECIES_GROUPS = AUTO_SPECIES_GROUPS 
 
 
 def get_species_assemblies(wildcards):

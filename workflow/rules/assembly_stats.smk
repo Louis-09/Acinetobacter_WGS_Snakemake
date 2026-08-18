@@ -1,12 +1,16 @@
 rule assembly_stats:
     input:
-        "results/{sample}/assembly/scaffolds.fasta"
+        fasta="results/{sample}/assembly/scaffolds.fasta"
 
     output:
-        "results/{sample}/assembly_stats/{sample}.txt"
+        stats="results/{sample}/assembly_stats/{sample}.txt"
+
+    conda:
+        "../../envs/assembly_stats.yaml"
 
     shell:
-        """
+        r"""
         mkdir -p results/{wildcards.sample}/assembly_stats
-        assembly-stats {input} > {output}
+
+        assembly-stats {input.fasta:q} > {output.stats:q}
         """

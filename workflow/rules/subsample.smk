@@ -1,18 +1,23 @@
-import subprocess
-import shutil
 from pathlib import Path
+import shutil
+
 
 def get_genome_size(wildcards):
     sample = wildcards.sample
+    group = SAMPLES[sample]["group"]
 
-    # Si la especie ya es conocida, usar su tamaño específico
-    for species, samples in config.get("species_groups", {}).items():
-        if sample in samples:
-            return config["genome_sizes"][species]
+    group_to_genome = {
+        "Acinetobacter": "abaumannii",
+        "Klebsiella": "kpneumoniae",
+    }
 
-    # Si la especie todavía es desconocida, usar tamaño genómico
-    # aproximado únicamente para el subsampling previo al ensamblaje
-    return config["default_genome_size"]
+    species = group_to_genome.get(group)
+
+    if species is None:
+        return config["default_genome_size"]
+
+    return config["genome_sizes"][species]
+
 
 rule subsample:
     input:
@@ -27,53 +32,48 @@ rule subsample:
     params:
         genome=get_genome_size,
         target=config["target_coverage"]
-    
-    run:
 
-        outdir = Path(output.r1).parent
-        outdir.mkdir(parents=True, exist_ok=True)
+    conda:
+        "../../envs/subsample.yaml"
 
-        cmd = [
-            "seqkit",
-            "stats",
-            "-T",
-            input.r1
-        ]
+    shell:
+        r"""
+        set -euo pipefail
 
-        result = subprocess.check_output(cmd).decode().strip().splitlines()
+        mkdir -p results/{wildcards.sample}/subsampled
 
-        header = result[0].split("\t")
-        values = result[1].split("\t")
+        BASES_R1=$(seqkit stats -T {input.r1:q} | tail -n 1 | cut -f 5)
 
-        stats = dict(zip(header, values))
+        COVERAGE=$(awk -v bases="$BASES_R1" \
+                       -v genome="{params.genome}" \
+                       'BEGIN {{printf "%.6f", (bases * 2) / genome}}')
 
-        bases = int(stats["sum_len"])
+        FRACTION=$(awk -v cov="$COVERAGE" \
+                       -v target="{params.target}" \
+                       'BEGIN {{
+                           if (cov > target)
+                               printf "%.8f", target / cov;
+                           else
+                               printf "1.00000000";
+                       }}')
 
-        coverage = (bases * 2) / params.genome
+        echo "Sample: {wildcards.sample}"
+        echo "Genome size: {params.genome}"
+        echo "Estimated coverage: $COVERAGE x"
+        echo "Subsampling fraction: $FRACTION"
 
-        fraction = 1.0
+        if awk -v cov="$COVERAGE" \
+               -v target="{params.target}" \
+               'BEGIN {{exit !(cov > target)}}'
+        then
+            seqtk sample -s100 {input.r1:q} "$FRACTION" | gzip -c > {output.r1:q}
+            seqtk sample -s100 {input.r2:q} "$FRACTION" | gzip -c > {output.r2:q}
+        else
+            cp {input.r1:q} {output.r1:q}
+            cp {input.r2:q} {output.r2:q}
+        fi
 
-        if coverage > params.target:
-            fraction = params.target / coverage
-
-            subprocess.check_call(
-                f"seqtk sample -s100 {input.r1} {fraction} | gzip -c > {output.r1}",
-                shell=True
-            )
-
-            subprocess.check_call(
-                f"seqtk sample -s100 {input.r2} {fraction} | gzip -c > {output.r2}",
-                shell=True
-            )
-
-        else:
-
-            shutil.copy2(input.r1, output.r1)
-            shutil.copy2(input.r2, output.r2)
-
-        with open(output.report, "w") as f:
-
-            f.write("sample\tcoverage\tfraction\n")
-            f.write(
-                f"{wildcards.sample}\t{coverage:.2f}\t{fraction:.4f}\n"
-            )
+        printf "sample\tcoverage\tfraction\n" > {output.report:q}
+        printf "{wildcards.sample}\t%.2f\t%.4f\n" \
+            "$COVERAGE" "$FRACTION" >> {output.report:q}
+        """
